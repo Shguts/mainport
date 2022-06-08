@@ -434,7 +434,6 @@ bool get(MainWindow::queue_t *q,uint8_t*data,size_t size) {
 }
 uint32_t get(MainWindow::queue_t *q,size_t size) {
     if (q->bytes_avail<size) size = q->bytes_avail;
-    //data[q->head]=*q->buffer++;
     uint8_t data1[4];
     for (size_t i=0;i<size;i++) {
         data1[i] = q->buffer[(q->head+i)%q->buffer_size];
@@ -445,7 +444,7 @@ uint32_t get(MainWindow::queue_t *q,size_t size) {
 }
 
 void writetoTS1(MainWindow::queue_t *q,MainWindow::BODYmsg*datarecord) {
-    datarecord->TS1 = get(&(*q),sizeof(datarecord->TS1));
+    datarecord->TS1 = get(q,sizeof(datarecord->TS1));
 }
 void writetoTS2(MainWindow::queue_t *q,MainWindow::BODYmsg*datarecord,MainWindow::HEADing*headrecord) {
     for (int i=0;headrecord->LengthMessage-8>i;i++) {
@@ -463,7 +462,7 @@ void writetoTS2(MainWindow::queue_t *q,MainWindow::BODYmsg*datarecord,MainWindow
 }
 
 void writetoTS3(MainWindow::queue_t *q,MainWindow::BODYmsg*datarecord) {
-    datarecord->TS3 = get(&(*q),sizeof(datarecord->TS3));
+    datarecord->TS3 = get(q,sizeof(datarecord->TS3));
 }
 QByteArray functionforwrite(uint32_t operationfalse,MainWindow::queue_t*q,MainWindow::BODYmsg*datarecord,int getsuzesoftypes,QByteArray data) {
     memcpy(data.data()+getsuzesoftypes,&(operationfalse),4);
@@ -508,7 +507,7 @@ QByteArray writerostruct(MainWindow::HEADing*headrecord,MainWindow::BODYmsg*data
     switch (headrecord->Namecomand) {
     case 0x02:{
         if (crc32i(0,headformember,headrecord->LengthMessage-4,&(*q))==(get(&(*q),&(*headrecord)))) {
-            writetoTS1(&(*q),&(*datarecord));
+            writetoTS1(q,datarecord);
             uint32_t getreevrsedig=0;
             uint8_t massiveforTS1[4];
             for (int i=0;i<sizeof(massiveforTS1);i++) {
@@ -517,23 +516,23 @@ QByteArray writerostruct(MainWindow::HEADing*headrecord,MainWindow::BODYmsg*data
             }
             datarecord->TS1 = getreevrsedig;
             datarecord->TS2.clear();
-            writetoTS2(&(*q),&(*datarecord),&(*headrecord));
-            writetoTS3(&(*q),&(*datarecord));
+            writetoTS2(q,datarecord,headrecord);
+            writetoTS3(q,datarecord);
             for (int i=0;i<datarecord->TS2.size();i++) {
                 TOWRITE_FOR_SPO->append(datarecord->TS2[i]);
             }
             if (TOWRITE_FOR_SPO->size()==datarecord->TS1) {
-                return functionforwrite(UVK20_RES_OK_SPOLOAD,&(*q),&(*datarecord),getsuzesoftypes,data);
+                return functionforwrite(UVK20_RES_OK_SPOLOAD,q,datarecord,getsuzesoftypes,data);
             }
             else if (TOWRITE_FOR_SPO->size()<datarecord->TS1){
                 return functionforwrite(UVK20_RES_OK,&(*q),&(*datarecord),getsuzesoftypes,data);
             }
             else if (datarecord->TS2.size()>datarecord->TS1) {
-                return functionforwrite(UVK20_RES_FAIL_SPOLOAD,&(*q),&(*datarecord),getsuzesoftypes,data);
+                return functionforwrite(UVK20_RES_FAIL_SPOLOAD,q,datarecord,getsuzesoftypes,data);
             }
 
         } else {
-            return functionforwrite(UVK20_RES_FAIL_CS,&(*q),&(*datarecord),getsuzesoftypes,data);
+            return functionforwrite(UVK20_RES_FAIL_CS,q,datarecord,getsuzesoftypes,data);
         }
 
     }
@@ -556,9 +555,9 @@ QByteArray writerostruct(MainWindow::HEADing*headrecord,MainWindow::BODYmsg*data
     }
     case 0x08:{
         if (crc32i(0,headformember,headrecord->LengthMessage-4,&(*q))==*(uint32_t*)((q->buffer+(q->head+headrecord->LengthMessage-4)%q->buffer_size))) {
-            writetoTS1(&(*q),&(*datarecord));
-            writetoTS2(&(*q),&(*datarecord),&(*headrecord));
-            writetoTS3(&(*q),&(*datarecord));
+            writetoTS1(q,datarecord);
+            writetoTS2(q,datarecord,headrecord);
+            writetoTS3(q,datarecord);
             operationfalse = UVK20_RES_OK;
         }
         else {
@@ -577,9 +576,9 @@ QByteArray writerostruct(MainWindow::HEADing*headrecord,MainWindow::BODYmsg*data
     case 0x04:{
         uint8_t keyarr[80] = {};
         if (crc32i(0,headformember,headrecord->LengthMessage-4,&(*q))==*(uint32_t*)((q->buffer+(q->head+headrecord->LengthMessage-4)%q->buffer_size))) {
-            writetoTS1(&(*q),&(*datarecord));
-            writetoTS2(&(*q),&(*datarecord),&(*headrecord));
-            writetoTS3(&(*q),&(*datarecord));
+            writetoTS1(q,datarecord);
+            writetoTS2(q,datarecord,headrecord);
+            writetoTS3(q,datarecord);
             operationfalse = UVK20_RES_OK;
             for (int i=0;i<size/2;i++) {
                 datarecord->TS2[i]^=GSCarray[i];
@@ -614,9 +613,9 @@ QByteArray writerostruct(MainWindow::HEADing*headrecord,MainWindow::BODYmsg*data
             shufflearr[i] = bubble;
         }
         if (crc32i(0,headformember,headrecord->LengthMessage-4,&(*q))==*(uint32_t*)((q->buffer+(q->head+headrecord->LengthMessage-4)%q->buffer_size))) {
-            writetoTS1(&(*q),&(*datarecord));
-            writetoTS2(&(*q),&(*datarecord),&(*headrecord));
-            writetoTS3(&(*q),&(*datarecord));
+            writetoTS1(q,datarecord);
+            writetoTS2(q,datarecord,headrecord);
+            writetoTS3(q,datarecord);
             operationfalse = UVK20_RES_OK;
             for (int i=0;i<size/2;i++) {
                 datarecord->TS2[i]^=GSCarray[i];
