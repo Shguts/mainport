@@ -4,7 +4,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = QSerialPort
 
-CONFIG += c++11
+CONFIG += c++17
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -20,11 +20,19 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
-    testsresults.cpp
+    serial.cpp \
+    testsresults.cpp \
+    utils.cpp
 
 HEADERS += \
+    CRCTABLES.h \
+    constants.h \
     mainwindow.h \
-    testsresults.h
+    seria2.h \
+    serial.h \
+    singleton.h \
+    testsresults.h \
+    utils.h
 
 FORMS += \
     mainwindow.ui \
